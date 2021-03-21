@@ -5,9 +5,9 @@ import subprocess
 import sys
 import random
 
-dataFolder="../data/"
-binFolder="../bin/"
-srcFolder="../src/"
+dataFolder="data/"
+binFolder="bin/"
+srcFolder="src/"
 
 datasets=[1,2,3]
 
