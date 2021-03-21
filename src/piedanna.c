@@ -10,9 +10,13 @@
 struct array
 {
     unsigned long size;
+    unsigned long trueSize;
     long *val;
 };
 
+/*
+* Debug only - Print an array
+*/
 void printArray(char name[], struct array *array)
 {
     printf("==== %s [%li] ====\n", name, array->size);
@@ -25,7 +29,8 @@ void printArray(char name[], struct array *array)
 void subArray(struct array *array, unsigned long start, unsigned long end)
 {
     array->size = end-start;
-    array->val = array->val + start;
+    memcpy(array->val, &array->val[start], (end-start) * sizeof(long));
+    //array->val = array->val + start;
 }
 
 void invertArray(struct array *array)
@@ -51,24 +56,30 @@ long max(long x, long y)
 }
 
 //Initilialisation
-void loadArrayFromFile(struct array *array, unsigned long maxSize, char fileName[])
+void loadArrayFromFile(struct array *array, char fileName[])
 {
-    array->val = malloc(maxSize*sizeof(unsigned long));
-
     FILE *file = fopen(fileName, "r");
 
     if (!file) {
         printf("File %s cannot be opened\n", fileName);
         exit(0);
     }
-
-    while(fscanf(file, "%ld", &array->val[array->size]) != EOF) {
+    
+    array->size = 0;
+    long data;
+    while(fscanf(file, "%ld", &data) != EOF) {
         array->size++;
     }
 
-    array->val = realloc(array->val, array->size * sizeof(unsigned long));
+    array->trueSize = array->size;
+    array->size = pow(2, ceil(log2(array->size))); //Prochaine puissance de 2
 
-    fclose(file);    
+    rewind(file);
+    array->val = malloc(array->size * sizeof(long));
+    for(unsigned long i = 0; fscanf(file, "%ld", &array->val[i]) != EOF; i++){
+    }
+
+    fclose(file);
 }
 
 void initTmpArray(struct array *array, struct array *upwardArray, long neutral)
@@ -87,9 +98,10 @@ void initTmpArray(struct array *array, struct array *upwardArray, long neutral)
     }
 }
 
-void initArray(struct array *array, unsigned long size, long neutral)
+void initArray(struct array *array, unsigned long size, unsigned long trueSize, long neutral)
 {
     array->size = size;
+    array->trueSize = trueSize;
     array->val = malloc(size * sizeof(long));
 
     for (unsigned long i = 0; i < size; i++)
@@ -136,10 +148,13 @@ void prefix(struct array *q, struct array *prefixArray, long (*operation)(long, 
     unsigned long m = log2(q->size);
     upward(tmpArray, m, operation);
 
-    initArray(prefixArray, q->size*2, neutral);
+    initArray(prefixArray, q->size*2, q->trueSize, neutral);
     downward(tmpArray, prefixArray, m, operation);
 
     final(tmpArray, prefixArray, m, operation);
+
+    free(tmpArray->val);
+    free(tmpArray);
 
     subArray(prefixArray, prefixArray->size/2, prefixArray->size);
 }
@@ -154,12 +169,12 @@ void suffix(struct array *q, struct array *suffix, long (*operation)(long, long)
 
 void buildM(struct array *q, struct array *pSum, struct array *sSum, struct array *sMax, struct array *pMax, struct array *m)
 {
-    initArray(m, q->size, 0);
+    initArray(m, q->size, q->trueSize, 0);
 
     long ms;
     long mp;
     
-    for (unsigned long i = 0; i <= q->size; i++)
+    for (unsigned long i = 0; i < q->trueSize; i++)
     {
         ms = pMax->val[i] - sSum->val[i];
         mp = sMax->val[i] - pSum->val[i];
@@ -171,7 +186,7 @@ void printResult(struct array *q, struct array *m)
 {
     long maxval = 0;
     unsigned long bestIndex = 0;
-    for (unsigned long i = 0; i <= m->size; i++)
+    for (unsigned long i = 0; i < m->trueSize; i++)
     {
         if (m->val[i] > maxval) {
             maxval = m->val[i];
@@ -180,7 +195,7 @@ void printResult(struct array *q, struct array *m)
     }
 
     printf("%li ", maxval);
-    for (unsigned long i = bestIndex; m->val[i] == maxval; i++)
+    for (unsigned long i = bestIndex; i < m->trueSize && m->val[i] == maxval; i++)
     {
         printf("%li ", q->val[i]);
     }
@@ -192,7 +207,7 @@ void findMaxSubArray(char fileName[])
     //Initialisation
     unsigned long maxSize = 100000;
     struct array *q = malloc(sizeof(struct array));
-    loadArrayFromFile(q, maxSize, fileName);
+    loadArrayFromFile(q, fileName);
 
     //PSUM
     struct array *pSum = malloc(sizeof(struct array));
@@ -214,16 +229,31 @@ void findMaxSubArray(char fileName[])
     struct array *m = malloc(sizeof(struct array));
     buildM(q, pSum, sSum, sMax, pMax, m);
 
+    free(pSum->val);
+    free(pSum);
+    free(sSum->val);
+    free(sSum);
+    free(sMax->val);
+    free(sMax);
+    free(pMax->val);
+    free(pMax);
+
     //Print Result
     printResult(q,m);
+
+    free(q->val);
+    free(q);
+    free(m->val);
+    free(m);
 }
 
 int main(int argc, char **argv)
 {
-    // Calculate the time taken by fun() 
     clock_t t; 
     t = clock(); 
+
     findMaxSubArray(argv[1]);
+
     t = clock() - t; 
     double time_taken = ((double)t)/CLOCKS_PER_SEC;
   
