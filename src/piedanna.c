@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <omp.h>
 
 //gcc -std=c99 -o bin/piedanna src/piedanna.c -lm
 
@@ -30,17 +31,17 @@ void subArray(struct array *array, unsigned long start, unsigned long end)
 {
     array->size = end-start;
     memcpy(array->val, &array->val[start], (end-start) * sizeof(long));
-    //array->val = array->val + start;
 }
 
 void invertArray(struct array *array)
 {
     long tmp = 0;
-    for (unsigned long i = 0; i < array->size / 2; i++)
-    {
-        tmp = array->val[i];
-        array->val[i] = array->val[array->size - i - 1];
-        array->val[array->size - i - 1] = tmp;
+
+    #pragma omp parallel for
+    for (unsigned long i = 0; i < array->size/2; i++) {
+        long temp = array->val[i];
+        array->val[i] = array->val[array->size-i];
+        array->val[array->size-i] = temp;
     }
 }
 
@@ -88,6 +89,7 @@ void initTmpArray(struct array *array, struct array *upwardArray, long neutral)
     upwardArray->size = size;
     upwardArray->val = malloc(size * sizeof(long));
 
+    #pragma omp parallel for
     for (unsigned long i = 0; i < size; i++)
     {
         if (i < size/2) {
@@ -104,6 +106,7 @@ void initArray(struct array *array, unsigned long size, unsigned long trueSize, 
     array->trueSize = trueSize;
     array->val = malloc(size * sizeof(long));
 
+    #pragma omp parallel for
     for (unsigned long i = 0; i < size; i++)
     {
         array->val[i] = neutral;
@@ -114,7 +117,8 @@ void initArray(struct array *array, unsigned long size, unsigned long trueSize, 
 void upward(struct array *array, unsigned long m, long (*operation)(long, long))
 {
     for (long l = m - 1; l >= 0; l--) {
-        for (unsigned long j = pow(2, l); j <= (pow(2, l+1) - 1); j++) {
+        #pragma omp parallel for
+        for (unsigned long j = (unsigned long) pow(2, l); j <= ((unsigned long) pow(2, l+1) - 1); j++) {
             array->val[j] = operation(array->val[2 * j], array->val[2 * j + 1]);
         }
     }
@@ -123,7 +127,8 @@ void upward(struct array *array, unsigned long m, long (*operation)(long, long))
 void downward(struct array *tmpArray, struct array *array, long m, long (*operation)(long, long))
 {
     for (long l = 1; l <= m; l++) {
-        for (unsigned long j = pow(2, l); j <= (pow(2, l + 1) - 1); j++) {
+        #pragma omp parallel for
+        for (unsigned long j = (unsigned long) pow(2, l); j <= ((unsigned long) pow(2, l + 1) - 1); j++) {
             if ((j % 2) == 0) {
                 array->val[j] = array->val[j / 2];
             } else {
@@ -135,7 +140,8 @@ void downward(struct array *tmpArray, struct array *array, long m, long (*operat
 
 void final(struct array *tmpArray, struct array *array, long m, long (*operation)(long, long))
 {
-    for (unsigned long j = pow(2, m); j <= (pow(2, m + 1) - 1); j++) {
+    #pragma omp parallel for
+    for (unsigned long j = (unsigned long) pow(2, m); j <= ((unsigned long) pow(2, m + 1) - 1); j++) {
         array->val[j] = operation(tmpArray->val[j], array->val[j]);
     }
 }
@@ -186,6 +192,8 @@ void printResult(struct array *q, struct array *m)
 {
     long maxval = 0;
     unsigned long bestIndex = 0;
+
+    #pragma omp parallel for
     for (unsigned long i = 0; i < m->trueSize; i++)
     {
         if (m->val[i] > maxval) {
@@ -249,14 +257,14 @@ void findMaxSubArray(char fileName[])
 
 int main(int argc, char **argv)
 {
-    clock_t t; 
-    t = clock(); 
+    clock_t t;
+    t = clock();
 
     findMaxSubArray(argv[1]);
 
-    t = clock() - t; 
+    t = clock() - t;
     double time_taken = ((double)t)/CLOCKS_PER_SEC;
-  
-    printf("Time: %f\n", time_taken); 
-    return 0; 
+
+    printf("Time: %f\n", time_taken);
+    return 0;
 }
