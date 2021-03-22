@@ -40,8 +40,8 @@ void invertArray(struct array *array)
     #pragma omp parallel for
     for (unsigned long i = 0; i < array->size/2; i++) {
         long temp = array->val[i];
-        array->val[i] = array->val[array->size-i];
-        array->val[array->size-i] = temp;
+        array->val[i] = array->val[array->size - i - 1];
+        array->val[array->size - i - 1] = temp;
     }
 }
 
