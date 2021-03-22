@@ -9,7 +9,7 @@ dataFolder="data/"
 binFolder="bin/"
 srcFolder="src/"
 
-datasets=[1,2,3]
+datasets=[1,2,3,2048,65536]
 
 def runDataset(name, i) :
     output=""

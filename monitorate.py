@@ -25,6 +25,15 @@ def runDataset(name, i):
                 return result
             else:
                 return "BAD_RESULT"
+    except  CalledProcessError as e :
+        output=e.output.strip().replace('\n', '')
+        if (e.returncode < 0) :
+            return "FILE_NOT_FOUND"
+        with open(dataFolder+"/result"+str(i)) as f:
+            if f.readline().strip().replace('\n', '')==output:
+                return result
+            else:
+                return "BAD_RESULT"
     except (TimeoutExpired) as e :
         return "COMPILE_ERROR"
 
