@@ -1,9 +1,9 @@
-#include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
+#include <math.h>
 #include <omp.h>
+#include <limits.h>
 
 //gcc -std=c99 -o bin/piedanna src/piedanna.c -lm -fopenmp
 
@@ -14,18 +14,6 @@ struct array
     unsigned long trueSize;
     long *val;
 };
-
-/*
-* Debug only - Print an array
-*/
-void printArray(char name[], struct array *array)
-{
-    printf("==== %s [%li] ====\n", name, array->size);
-    for (unsigned long i = 0; i < array->size; ++i) {
-        printf("%li ", array->val[i]);
-    }
-    printf("\n");
-}
 
 void subArray(struct array *array, unsigned long start, unsigned long end)
 {
@@ -78,6 +66,13 @@ void loadArrayFromFile(struct array *array, char fileName[])
     rewind(file);
     array->val = malloc(array->size * sizeof(long));
     for(unsigned long i = 0; fscanf(file, "%ld", &array->val[i]) != EOF; i++){
+    }
+
+    if (array->size != array->trueSize) {
+        #pragma omp parallel for
+        for(unsigned long i = array->size; i < array->trueSize; i++) {
+            array->val[i] = 0;
+        }
     }
 
     fclose(file);
@@ -226,11 +221,11 @@ void findMaxSubArray(char fileName[])
     
     //SMAX
     struct array *sMax = malloc(sizeof(struct array));
-    suffix(pSum, sMax, max, 0);
+    suffix(pSum, sMax, max, LONG_MIN);
     
     //PMAX
     struct array *pMax = malloc(sizeof(struct array));
-    prefix(sSum, pMax, max, 0);
+    prefix(sSum, pMax, max, LONG_MIN);
 
     //M
     struct array *m = malloc(sizeof(struct array));
