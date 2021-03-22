@@ -193,7 +193,6 @@ void printResult(struct array *q, struct array *m)
     long maxval = 0;
     unsigned long bestIndex = 0;
 
-    #pragma omp parallel for
     for (unsigned long i = 0; i < m->trueSize; i++)
     {
         if (m->val[i] > maxval) {
