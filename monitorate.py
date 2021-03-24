@@ -9,7 +9,7 @@ dataFolder="data/"
 binFolder="bin/"
 srcFolder="src/"
 
-datasets=[16,2048,65536,131072,1048576,1048577,2097152]
+datasets=[16,2048,65536,131072,1048576,1048577,2097152,4194304]
 
 def runDataset(name, i):
     output=""

@@ -60,17 +60,9 @@ void loadArrayFromFile(struct array *array, char fileName[])
         array->trueSize++;
         if(i > array->size-1) {
             array->size = array->size * 2;
-            long *tmp = realloc(array->val, array->size * sizeof(long));
-            if (tmp == NULL) {
-                free(array->val);
-                exit(EXIT_FAILURE);
-            } else {
-                array->val = tmp;
-            }
+            array->val = realloc(array->val, array->size * sizeof(long));
         }
     }
-
-    array->size = pow(2, ceil(log2(array->trueSize))); //Prochaine puissance de 2
 
     if (array->size != array->trueSize) {
         #pragma omp parallel for
