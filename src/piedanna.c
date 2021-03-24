@@ -4,8 +4,9 @@
 #include <math.h>
 #include <omp.h>
 #include <limits.h>
+#include <time.h>
 
-//gcc -std=c99 -o bin/piedanna src/piedanna.c -lm -fopenmp
+//gcc -std=c99 -o bin/piedanna-fopenmp src/piedanna.c -lm -fopenmp
 
 //Utils
 struct array
@@ -23,8 +24,6 @@ void subArray(struct array *array, unsigned long start, unsigned long end)
 
 void invertArray(struct array *array)
 {
-    long tmp = 0;
-
     #pragma omp parallel for
     for (unsigned long i = 0; i < array->size/2; i++) {
         long temp = array->val[i];
@@ -54,19 +53,24 @@ void loadArrayFromFile(struct array *array, char fileName[])
         exit(0);
     }
     
-    array->size = 0;
-    long data;
-    while(fscanf(file, "%ld", &data) != EOF) {
-        array->size++;
-    }
-
-    array->trueSize = array->size;
-    array->size = pow(2, ceil(log2(array->size))); //Prochaine puissance de 2
-
-    rewind(file);
+    array->size = 16;
     array->val = malloc(array->size * sizeof(long));
-    for(unsigned long i = 0; fscanf(file, "%ld", &array->val[i]) != EOF; i++){
+    
+    for(unsigned long i = 0; fscanf(file, "%ld", &array->val[i]) != EOF; i++) {
+        array->trueSize++;
+        if(i > array->size-1) {
+            array->size = array->size * 2;
+            long *tmp = realloc(array->val, array->size * sizeof(long));
+            if (tmp == NULL) {
+                free(array->val);
+                exit(EXIT_FAILURE);
+            } else {
+                array->val = tmp;
+            }
+        }
     }
+
+    array->size = pow(2, ceil(log2(array->trueSize))); //Prochaine puissance de 2
 
     if (array->size != array->trueSize) {
         #pragma omp parallel for
@@ -207,7 +211,6 @@ void printResult(struct array *q, struct array *m)
 void findMaxSubArray(char fileName[])
 {
     //Initialisation
-    unsigned long maxSize = 100000;
     struct array *q = malloc(sizeof(struct array));
     loadArrayFromFile(q, fileName);
 
