@@ -4,12 +4,13 @@ from os.path import isfile
 import subprocess
 import random
 import time
+import math
 
 dataFolder="data/"
 binFolder="bin/"
 srcFolder="src/"
 
-datasets=[16,2048,65536,131072,1048576,1048577,2097152,4194304,8388608]
+datasets=[16,2048,65536,131072,1048576,1048577,2097152]
 
 def runDataset(name, i):
     output=""
