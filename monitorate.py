@@ -9,7 +9,7 @@ dataFolder="data/"
 binFolder="bin/"
 srcFolder="src/"
 
-datasets=[16,2048,65536,131072,1048576,1048577,2097152,4194304]
+datasets=[16,2048,65536,131072,1048576,1048577,2097152,4194304,8388608]
 
 def runDataset(name, i):
     output=""
@@ -35,7 +35,7 @@ def runDataset(name, i):
             else:
                 return "BAD_RESULT"
     except (TimeoutExpired) as e :
-        return "COMPILE_ERROR"
+        return "TIMED_OUT"
 
 def runProject(name):
     result=""

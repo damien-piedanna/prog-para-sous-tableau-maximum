@@ -53,12 +53,15 @@ void loadArrayFromFile(struct array *array, char fileName[])
         exit(0);
     }
     
+    array->trueSize = 0;
     array->size = 16;
     array->val = malloc(array->size * sizeof(long));
     
-    for(unsigned long i = 0; fscanf(file, "%ld", &array->val[i]) != EOF; i++) {
+    while (1) {
+        long scan = fscanf(file, "%ld", &array->val[array->trueSize]);
+        if (scan == EOF) break;
         array->trueSize++;
-        if(i > array->size-1) {
+        if(array->trueSize > array->size-1) {
             array->size = array->size * 2;
             array->val = realloc(array->val, array->size * sizeof(long));
         }
@@ -66,7 +69,7 @@ void loadArrayFromFile(struct array *array, char fileName[])
 
     if (array->size != array->trueSize) {
         #pragma omp parallel for
-        for(unsigned long i = array->size; i < array->trueSize; i++) {
+        for(unsigned long i = array->trueSize; i < array->size; i++) {
             array->val[i] = 0;
         }
     }
@@ -78,11 +81,11 @@ void initTmpArray(struct array *array, struct array *upwardArray, long neutral)
 {
     unsigned long size = array->size*2;
     upwardArray->size = size;
+    upwardArray->trueSize = array->trueSize;
     upwardArray->val = malloc(size * sizeof(long));
 
     #pragma omp parallel for
-    for (unsigned long i = 0; i < size; i++)
-    {
+    for (unsigned long i = 0; i < size; i++) {
         if (i < size/2) {
             upwardArray->val[i] = neutral;
         } else {
@@ -98,8 +101,7 @@ void initArray(struct array *array, unsigned long size, unsigned long trueSize, 
     array->val = malloc(size * sizeof(long));
 
     #pragma omp parallel for
-    for (unsigned long i = 0; i < size; i++)
-    {
+    for (unsigned long i = 0; i < size; i++) {
         array->val[i] = neutral;
     }
 }
@@ -183,15 +185,15 @@ void printResult(struct array *q, struct array *m)
 {
     long maxval = 0;
     unsigned long bestIndex = 0;
-
-    for (unsigned long i = 0; i < m->trueSize; i++)
+    
+    for (unsigned long i = 0; i < q->trueSize; i++)
     {
         if (m->val[i] > maxval) {
             maxval = m->val[i];
             bestIndex = i;
         }
     }
-
+    
     printf("%li ", maxval);
     for (unsigned long i = bestIndex; i < m->trueSize && m->val[i] == maxval; i++)
     {
@@ -209,7 +211,7 @@ void findMaxSubArray(char fileName[])
     //PSUM
     struct array *pSum = malloc(sizeof(struct array));
     prefix(q, pSum, plus, 0);
-
+    
     //SSUM
     struct array *sSum = malloc(sizeof(struct array));
     suffix(q, sSum, plus, 0);
