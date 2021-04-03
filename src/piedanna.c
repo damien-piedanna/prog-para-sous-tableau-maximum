@@ -57,9 +57,7 @@ void loadArrayFromFile(struct array *array, char fileName[])
     array->size = 16;
     array->val = malloc(array->size * sizeof(long));
     
-    while (1) {
-        long scan = fscanf(file, "%ld", &array->val[array->trueSize]);
-        if (scan == EOF) break;
+    while (fscanf(file, "%ld", &array->val[array->trueSize]) != EOF) {
         array->trueSize++;
         if(array->trueSize > array->size-1) {
             array->size = array->size * 2;
